@@ -1,15 +1,15 @@
-import type { Request, Response } from 'express';
-import { prisma } from '../lib/prisma.js';
+import type { Request, Response } from "express";
+import { prisma } from "../lib/prisma.js";
 
 export async function createNote(req: Request, res: Response) {
   const { title, body } = (req.body ?? {}) as Record<string, unknown>;
 
-  if (typeof title !== 'string' || title.trim() === '') {
-    return res.status(400).json({ message: 'Title wajib diisi.' });
+  if (typeof title !== "string" || title.trim() === "") {
+    return res.status(400).json({ message: "Title wajib diisi." });
   }
 
-  if (typeof body !== 'string' || body.trim() === '') {
-    return res.status(400).json({ message: 'Body wajib diisi.' });
+  if (typeof body !== "string" || body.trim() === "") {
+    return res.status(400).json({ message: "Body wajib diisi." });
   }
 
   try {
@@ -21,16 +21,16 @@ export async function createNote(req: Request, res: Response) {
     });
 
     return res.status(201).json({
-      message: 'Note berhasil dibuat.',
+      message: "Note berhasil dibuat.",
       data: note,
     });
   } catch {
-    return res.status(500).json({ message: 'Gagal membuat note.' });
+    return res.status(500).json({ message: "Gagal membuat note." });
   }
 }
 
 function positiveInteger(value: unknown, fallback: number): number {
-  if (typeof value !== 'string') {
+  if (typeof value !== "string") {
     return fallback;
   }
 
@@ -50,7 +50,7 @@ export async function getAllNotes(req: Request, res: Response) {
         skip,
         take: limit,
         orderBy: {
-          id: 'desc',
+          id: "desc",
         },
       }),
       prisma.notes.count(),
@@ -67,7 +67,37 @@ export async function getAllNotes(req: Request, res: Response) {
     });
   } catch {
     return res.status(500).json({
-      message: 'Gagal mengambil notes.',
+      message: "Gagal mengambil notes.",
+    });
+  }
+}
+
+export async function findNoteById(req: Request, res: Response) {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      message: "ID note tidak valid.",
+    });
+  }
+
+  try {
+    const note = await prisma.notes.findUnique({
+      where: { id },
+    });
+
+    if (!note) {
+      return res.status(404).json({
+        message: "Note tidak ditemukan.",
+      });
+    }
+
+    return res.status(200).json({
+      data: note,
+    });
+  } catch {
+    return res.status(500).json({
+      message: "Gagal mengambil note.",
     });
   }
 }
