@@ -132,3 +132,55 @@ export async function deleteNoteById(req: Request, res: Response) {
     });
   }
 }
+
+
+export async function updateNote(req: Request, res: Response) {
+  // const { title, body } = (req.body ?? {}) as Record<string, unknown>;
+
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      message: "ID note tidak valid.",
+    });
+  }
+
+  const { title, body } = (req.body ?? {}) as Record<string, unknown>;
+
+  if (typeof title !== "string" || title.trim() === "") {
+    return res.status(400).json({ message: "Title wajib diisi." });
+  }
+
+  if (typeof body !== "string" || body.trim() === "") {
+    return res.status(400).json({ message: "Body wajib diisi." });
+  }
+
+  try {
+    const existingNote = await prisma.notes.findUnique({
+      where: { id },
+    });
+
+    if (!existingNote) {
+      return res.status(404).json({
+        message: "Note tidak ditemukan.",
+      });
+    }
+
+    const note = await prisma.notes.update({
+      where: { id },
+      data: {
+        title,
+        body
+      }
+    })
+
+    return res.status(200).json({
+      data: note,
+      message: "Berhasil memperbarui catatan",
+    });
+  } catch {
+    return res.status(500).json({
+      message: "Terjadi kesalahan.",
+    });
+  }
+}
